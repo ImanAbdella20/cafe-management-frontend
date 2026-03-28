@@ -25,6 +25,11 @@ type DraftOrderItem = {
     notes: string;
 };
 
+type OrderSnapshot = {
+    orderNumber: string;
+    status: OrderStatus;
+};
+
 type StatusAction = {
     label: string;
     nextStatus: OrderStatus;
@@ -123,6 +128,41 @@ function createDraftOrderItem(rowId: string): DraftOrderItem {
     };
 }
 
+function canUseBrowserNotifications(): boolean {
+    return typeof window !== "undefined" && "Notification" in window;
+}
+
+function playNotificationChime() {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    const AudioContextCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) {
+        return;
+    }
+
+    const context = new AudioContextCtor();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(880, context.currentTime);
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.07, context.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.28);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.3);
+
+    window.setTimeout(() => {
+        void context.close();
+    }, 400);
+}
+
 export default function OrdersWorkspace({ role }: { role: OrderRoleActor }) {
     const orderApi = useMemo(() => getOrderApiForActor(role), [role]);
 
@@ -147,12 +187,103 @@ export default function OrdersWorkspace({ role }: { role: OrderRoleActor }) {
     const [draftItems, setDraftItems] = useState<DraftOrderItem[]>([createDraftOrderItem("0")]);
     const [addingItem, setAddingItem] = useState(false);
     const draftRowIdRef = useRef(1);
+    const orderSnapshotRef = useRef<Record<string, OrderSnapshot>>({});
+    const hasSeededSnapshotRef = useRef(false);
 
     const [toast, setToast] = useState<ToastState>(null);
 
     const showToast = useCallback((type: "success" | "error", message: string) => {
         setToast({ type, message });
     }, []);
+
+    const triggerOrderAlert = useCallback(
+        (title: string, message: string, voiceText: string) => {
+            showToast("success", message);
+
+            try {
+                playNotificationChime();
+            } catch {
+                // Keep voice and toast notification even when audio playback fails.
+            }
+
+            if (canUseBrowserNotifications() && Notification.permission === "granted") {
+                new Notification(title, {
+                    body: message,
+                    tag: `${title.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`
+                });
+            }
+
+            if (typeof window !== "undefined" && "speechSynthesis" in window) {
+                const utterance = new SpeechSynthesisUtterance(voiceText);
+                utterance.rate = 1;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            }
+        },
+        [showToast]
+    );
+
+    const processRoleNotifications = useCallback(
+        (nextOrders: Order[]) => {
+            const nextSnapshot: Record<string, OrderSnapshot> = {};
+            nextOrders.forEach((order) => {
+                nextSnapshot[order.id] = {
+                    orderNumber: order.order_number,
+                    status: order.status
+                };
+            });
+
+            if (!hasSeededSnapshotRef.current) {
+                hasSeededSnapshotRef.current = true;
+                orderSnapshotRef.current = nextSnapshot;
+                return;
+            }
+
+            const previousSnapshot = orderSnapshotRef.current;
+
+            if (role === "barista") {
+                nextOrders.forEach((order) => {
+                    if (!previousSnapshot[order.id]) {
+                        triggerOrderAlert(
+                            "New Order",
+                            `Order ${order.order_number} created and added to queue.`,
+                            `New order ${order.order_number} created.`
+                        );
+                    }
+                });
+            }
+
+            if (role === "cashier") {
+                nextOrders.forEach((order) => {
+                    const previous = previousSnapshot[order.id];
+                    if (!previous) {
+                        return;
+                    }
+
+                    if (previous.status !== "ready" && order.status === "ready") {
+                        triggerOrderAlert(
+                            "Order Ready",
+                            `Order ${order.order_number} is ready for handoff.`,
+                            `Order ${order.order_number} is ready.`
+                        );
+                    }
+
+                    if (previous.status !== "completed" && order.status === "completed") {
+                        triggerOrderAlert(
+                            "Order Completed",
+                            `Order ${order.order_number} has been completed.`,
+                            `Order ${order.order_number} completed.`
+                        );
+                    }
+                });
+            }
+
+            orderSnapshotRef.current = nextSnapshot;
+        },
+        [role, triggerOrderAlert]
+    );
 
     useEffect(() => {
         if (!toast) {
@@ -166,6 +297,7 @@ export default function OrdersWorkspace({ role }: { role: OrderRoleActor }) {
         setLoadingOrders(true);
         try {
             const data = await orderApi.getOrders();
+            processRoleNotifications(data);
             setOrders(data);
             setStatusDrafts((previous) => {
                 const next: Record<string, OrderStatus> = {};
@@ -175,13 +307,11 @@ export default function OrdersWorkspace({ role }: { role: OrderRoleActor }) {
                 return next;
             });
 
-            if (!selectedOrderId && data.length > 0) {
-                setSelectedOrderId(data[0].id);
-            }
-
             if (data.length === 0) {
                 setSelectedOrderId("");
                 setSelectedOrder(null);
+            } else {
+                setSelectedOrderId((previous) => previous || data[0].id);
             }
         } catch (error) {
             const message = error instanceof Error ? error.message : "Failed to load orders.";
@@ -189,7 +319,7 @@ export default function OrdersWorkspace({ role }: { role: OrderRoleActor }) {
         } finally {
             setLoadingOrders(false);
         }
-    }, [orderApi, selectedOrderId, showToast]);
+    }, [orderApi, processRoleNotifications, showToast]);
 
     const loadOrderDetail = useCallback(
         async (orderId: string) => {
@@ -245,6 +375,43 @@ export default function OrdersWorkspace({ role }: { role: OrderRoleActor }) {
     }, [loadMenuItems, role]);
 
     useEffect(() => {
+        hasSeededSnapshotRef.current = false;
+        orderSnapshotRef.current = {};
+    }, [role]);
+
+    useEffect(() => {
+        if (role !== "barista" && role !== "cashier") {
+            return;
+        }
+
+        const timer = window.setInterval(() => {
+            void loadOrders();
+        }, 5000);
+
+        return () => window.clearInterval(timer);
+    }, [loadOrders, role]);
+
+    useEffect(() => {
+        if (role !== "barista" && role !== "cashier") {
+            return;
+        }
+
+        if (!canUseBrowserNotifications()) {
+            return;
+        }
+
+        if (Notification.permission === "default") {
+            const permissionTimer = window.setTimeout(() => {
+                void Notification.requestPermission();
+            }, 600);
+
+            return () => {
+                window.clearTimeout(permissionTimer);
+            };
+        }
+    }, [role]);
+
+    useEffect(() => {
         setActiveTab(actorTabs[role][0] ?? "overview");
     }, [role]);
 
@@ -259,10 +426,22 @@ export default function OrdersWorkspace({ role }: { role: OrderRoleActor }) {
         return orders
             .filter((order) => {
                 const statusMatches = statusFilter === "all" || order.status === statusFilter;
+                const normalizedSearchTerm = searchTerm.trim().toLowerCase();
                 const searchMatches =
-                    searchTerm.trim().length === 0 ||
-                    order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    order.id.toLowerCase().includes(searchTerm.toLowerCase());
+                    normalizedSearchTerm.length === 0 ||
+                    [
+                        order.order_number,
+                        order.id,
+                        order.status,
+                        order.order_type,
+                        order.cashier_id,
+                        String(order.subtotal),
+                        String(order.tax_amount),
+                        String(order.discount_amount),
+                        String(order.total_amount),
+                        order.created_at,
+                        order.updated_at
+                    ].some((value) => value.toLowerCase().includes(normalizedSearchTerm));
 
                 const orderDate = new Date(order.created_at);
                 const hasValidDate = !Number.isNaN(orderDate.getTime());

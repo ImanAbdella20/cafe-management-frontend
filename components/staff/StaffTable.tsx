@@ -63,7 +63,15 @@ export default function StaffTable({
     const filteredUsers = useMemo(() => {
         return users.filter((user) => {
             const search = searchValue.trim().toLowerCase();
-            const matchesSearch = !search || user.name.toLowerCase().includes(search) || user.email.toLowerCase().includes(search);
+            const matchesSearch = !search || [
+                String(user.id),
+                user.name,
+                user.email,
+                user.role,
+                user.is_active ? "active" : "inactive",
+                user.created_at,
+                user.updated_at
+            ].some((value) => value.toLowerCase().includes(search));
             const matchesRole = !roleFilter || user.role === roleFilter;
             const matchesStatus = statusFilter === "all" || (statusFilter === "active" ? user.is_active : !user.is_active);
             return matchesSearch && matchesRole && matchesStatus;

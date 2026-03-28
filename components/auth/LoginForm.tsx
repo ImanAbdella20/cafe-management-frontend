@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -70,6 +71,26 @@ export function LoginForm() {
         try {
             const data = await loginAdmin(values.email, values.password);
             setToken(data.token, values.remember ? "local" : "session");
+
+            const email = values.email.trim().toLowerCase();
+            const password = values.password;
+            const loginAt = new Date().toISOString();
+            if (values.remember) {
+                localStorage.setItem("auth:user-email", email);
+                localStorage.setItem("auth:user-password", password);
+                localStorage.setItem("auth:login-at", loginAt);
+                sessionStorage.removeItem("auth:user-email");
+                sessionStorage.removeItem("auth:user-password");
+                sessionStorage.removeItem("auth:login-at");
+            } else {
+                sessionStorage.setItem("auth:user-email", email);
+                sessionStorage.setItem("auth:user-password", password);
+                sessionStorage.setItem("auth:login-at", loginAt);
+                localStorage.removeItem("auth:user-email");
+                localStorage.removeItem("auth:user-password");
+                localStorage.removeItem("auth:login-at");
+            }
+
             const role = getRoleFromToken(data.token).toLowerCase();
             router.push(getRedirectPathFromRole(role));
         } catch (error) {
@@ -84,8 +105,15 @@ export function LoginForm() {
     return (
         <Card className="overflow-hidden rounded-2xl border-white/70 bg-white/70 dark:border-slate-700/70 dark:bg-slate-950/65">
             <CardHeader className="space-y-5 pb-4">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-teal-500 text-white shadow-lg shadow-sky-500/35">
-                    <LockKeyhole className="h-5 w-5" aria-hidden="true" />
+                <div className="relative inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lg shadow-sky-500/25 dark:border-slate-700 dark:bg-slate-900">
+                    <Image
+                        src="/Amidos-logo.png"
+                        alt="Amidos logo"
+                        fill
+                        className="object-cover"
+                        sizes="56px"
+                        priority
+                    />
                 </div>
 
                 <div className="space-y-1">
@@ -197,15 +225,6 @@ export function LoginForm() {
 
             <CardFooter className="border-t border-slate-200/70 pt-5 dark:border-slate-700/70">
                 <div className="w-full space-y-3 text-center">
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                        New here?{" "}
-                        <Link
-                            href=""
-                            className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:decoration-slate-600 dark:text-white dark:decoration-slate-500 dark:hover:decoration-slate-300"
-                        >
-                            Create account
-                        </Link>
-                    </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                         By continuing, you agree to our{" "}
                         <Link href="/terms" className="underline decoration-slate-300 underline-offset-4 hover:decoration-slate-500 dark:decoration-slate-500 dark:hover:decoration-slate-300">

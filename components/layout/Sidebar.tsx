@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -203,8 +204,15 @@ export default function Sidebar({
             >
                 <div className="flex h-full flex-col">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30">
-                            <Coffee className="h-5 w-5" aria-hidden="true" />
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-white shadow-lg shadow-cyan-500/20">
+                            <Image
+                                src="/Amidos-logo.png"
+                                alt="Amidos logo"
+                                width={44}
+                                height={44}
+                                className="h-10 w-10 object-contain"
+                                priority
+                            />
                         </div>
 
                         {showLabels ? (

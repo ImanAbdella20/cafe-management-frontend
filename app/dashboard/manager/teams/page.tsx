@@ -149,7 +149,15 @@ export default function ManagerTeamsPage() {
 
                 if (search.trim()) {
                     const term = search.trim().toLowerCase();
-                    return entry.name.toLowerCase().includes(term) || entry.email.toLowerCase().includes(term);
+                    return [
+                        String(entry.id),
+                        entry.name,
+                        entry.email,
+                        entry.role,
+                        entry.is_active ? "active" : "inactive",
+                        entry.created_at,
+                        entry.updated_at
+                    ].some((value) => value.toLowerCase().includes(term));
                 }
 
                 return true;

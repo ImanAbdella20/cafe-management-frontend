@@ -3,33 +3,16 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import type { DashboardRole } from "../../../components/layout/Sidebar";
-import CategoriesTable from "../../../components/menu/CategoriesTable";
 import ItemsTable from "../../../components/menu/ItemsTable";
-import Overview from "../../../components/menu/Overview";
-import PricesPanel from "../../../components/menu/PricesPanel";
-import Button from "../../../components/ui/Button";
 import { useAuth } from "../../../context/AuthContext";
 import { getRoleFromToken } from "../../../lib/auth";
 import { getCategories, getItems } from "../../../lib/api";
 import type { AppRole, Category, MenuItemWithPrice } from "../../../types/menu";
 
-type ActiveTab = "overview" | "categories" | "items" | "prices";
-
 type ToastState = {
     type: "success" | "error";
     message: string;
 } | null;
-
-const tabs: Array<{ key: ActiveTab; label: string }> = [
-    { key: "overview", label: "Overview" },
-    { key: "categories", label: "Categories" },
-    { key: "items", label: "Items" },
-    { key: "prices", label: "Prices" }
-];
-
-function canAccessPrices(role: AppRole) {
-    return role === "admin" || role === "manager";
-}
 
 function isDashboardRole(role: AppRole): role is DashboardRole {
     return role === "admin" || role === "manager" || role === "cashier" || role === "barista" || role === "staff";
@@ -43,10 +26,8 @@ export default function MenuManagementPage() {
         () => false
     );
 
-    const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
     const [categories, setCategories] = useState<Category[]>([]);
     const [items, setItems] = useState<MenuItemWithPrice[]>([]);
-    const [categoriesLoading, setCategoriesLoading] = useState(false);
     const [itemsLoading, setItemsLoading] = useState(false);
     const [pageError, setPageError] = useState("");
     const [toast, setToast] = useState<ToastState>(null);
@@ -64,7 +45,6 @@ export default function MenuManagementPage() {
     }, [toast]);
 
     const loadCategories = useCallback(async () => {
-        setCategoriesLoading(true);
         try {
             const data = await getCategories();
             setCategories(data);
@@ -72,8 +52,6 @@ export default function MenuManagementPage() {
             const message = error instanceof Error ? error.message : "Failed to load categories.";
             setPageError(message);
             notify("error", message);
-        } finally {
-            setCategoriesLoading(false);
         }
     }, [notify]);
 
@@ -129,21 +107,8 @@ export default function MenuManagementPage() {
         return "staff";
     }, [effectiveRole]);
 
-    const availableTabs = useMemo(() => {
-        if (canAccessPrices(effectiveRole)) {
-            return tabs;
-        }
-        return tabs.filter((tab) => tab.key !== "prices");
-    }, [effectiveRole]);
-
     const safeCategories = Array.isArray(categories) ? categories : [];
     const safeItems = Array.isArray(items) ? items : [];
-
-    useEffect(() => {
-        if (activeTab === "prices" && !canAccessPrices(effectiveRole)) {
-            setActiveTab("overview");
-        }
-    }, [activeTab, effectiveRole]);
 
     if (!hydrated) {
         return <div className="min-h-screen bg-slate-950" aria-hidden="true" />;
@@ -158,19 +123,7 @@ export default function MenuManagementPage() {
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Catalog</p>
                             <h1 className="mt-1 text-2xl font-semibold text-slate-100 sm:text-3xl">Menu Management</h1>
-                            <p className="mt-1 text-sm text-slate-400">Manage categories, menu items, and pricing with live backend data.</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2 rounded-xl border border-white/10 bg-slate-950/45 p-2">
-                            {availableTabs.map((tab) => (
-                                <Button
-                                    key={tab.key}
-                                    size="sm"
-                                    variant={activeTab === tab.key ? "primary" : "secondary"}
-                                    onClick={() => setActiveTab(tab.key)}
-                                >
-                                    {tab.label}
-                                </Button>
-                            ))}
+                            <p className="mt-1 text-sm text-slate-400">Manage menu items in a single streamlined workspace.</p>
                         </div>
                     </div>
                     {pageError ? <p className="relative mt-3 text-sm text-rose-300">{pageError}</p> : null}
@@ -189,30 +142,16 @@ export default function MenuManagementPage() {
                     </div>
                 ) : null}
 
-                {activeTab === "overview" ? <Overview totalCategories={safeCategories.length} totalItems={safeItems.length} /> : null}
+                <ItemsTable
+                    role={effectiveRole}
+                    categories={safeCategories}
+                    items={safeItems}
+                    loading={itemsLoading}
+                    onRefresh={refreshAll}
+                    notify={notify}
+                />
 
-                {activeTab === "categories" ? (
-                    <CategoriesTable
-                        role={effectiveRole}
-                        categories={safeCategories}
-                        loading={categoriesLoading}
-                        onRefresh={loadCategories}
-                        notify={notify}
-                    />
-                ) : null}
 
-                {activeTab === "items" ? (
-                    <ItemsTable
-                        role={effectiveRole}
-                        categories={safeCategories}
-                        items={safeItems}
-                        loading={itemsLoading}
-                        onRefresh={loadItems}
-                        notify={notify}
-                    />
-                ) : null}
-
-                {activeTab === "prices" ? <PricesPanel role={effectiveRole} items={safeItems} notify={notify} /> : null}
             </div>
         </DashboardLayout>
     );

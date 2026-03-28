@@ -1,4 +1,5 @@
 type JwtPayload = {
+    user_id?: number;
     role?: string;
     branch_id?: string;
 };
@@ -28,6 +29,12 @@ export function getRoleFromToken(token: string): string {
 export function getBranchIdFromToken(token: string): string {
     const decoded = decodeTokenPayload(token);
     return String(decoded?.branch_id ?? "").trim().toLowerCase();
+}
+
+export function getUserIdFromToken(token: string): number {
+    const decoded = decodeTokenPayload(token);
+    const raw = decoded?.user_id;
+    return typeof raw === "number" && Number.isFinite(raw) ? raw : 0;
 }
 
 export function requireRole(role: string): boolean {

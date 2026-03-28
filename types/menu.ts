@@ -30,6 +30,8 @@ export type MenuItem = {
 
 export type MenuItemWithPrice = {
     id: number;
+    category_id?: number | null;
+    category_name?: string;
     name: string;
     description: string;
     image_url: string;

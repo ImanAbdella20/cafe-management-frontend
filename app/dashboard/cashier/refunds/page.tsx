@@ -135,11 +135,15 @@ export default function CashierRefundsPage() {
                 }
 
                 const term = search.trim().toLowerCase();
-                return (
-                    entry.order_id.toLowerCase().includes(term) ||
-                    entry.reference.toLowerCase().includes(term) ||
-                    entry.method.toLowerCase().includes(term)
-                );
+                return [
+                    String(entry.id),
+                    entry.order_id,
+                    entry.reference,
+                    entry.method,
+                    entry.status,
+                    String(entry.amount),
+                    entry.paid_at
+                ].some((value) => value.toLowerCase().includes(term));
             })
             .sort((left, right) => new Date(right.paid_at).getTime() - new Date(left.paid_at).getTime());
     }, [payments, search, statusFilter]);

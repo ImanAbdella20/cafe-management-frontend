@@ -125,6 +125,18 @@ export type StaffUser = {
     updated_at: string;
 };
 
+export type CurrentUserProfile = {
+    id: number;
+    name: string;
+    email: string;
+    password: string;
+    role: StaffRole;
+    branch_id: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+};
+
 export type Shift = {
     id: number;
     user_id: number;
@@ -221,6 +233,15 @@ export async function fetchShiftsByUser(id: number): Promise<Shift[]> {
     try {
         const response = await api.get<ShiftsResponse>(`/users/${id}/shifts`);
         return response.data.data ?? [];
+    } catch (error) {
+        throw new Error(getErrorMessage(error));
+    }
+}
+
+export async function fetchCurrentUserProfile(): Promise<CurrentUserProfile> {
+    try {
+        const response = await api.get<CurrentUserProfile>("/users/me");
+        return response.data;
     } catch (error) {
         throw new Error(getErrorMessage(error));
     }
@@ -545,14 +566,14 @@ export async function getPayments(orderId = ""): Promise<Payment[]> {
     const trimmedOrderID = orderId.trim();
 
     try {
-        const response = await api.get<Payment[]>("/api/payments", {
+        const response = await api.get<Payment[] | { data?: Payment[] }>("/api/payments", {
             params: trimmedOrderID
                 ? {
                     order_id: trimmedOrderID
                 }
                 : undefined
         });
-        return response.data;
+        return normalizeListResponse<Payment>(response.data);
     } catch (error) {
         throw new Error(getErrorMessage(error));
     }
