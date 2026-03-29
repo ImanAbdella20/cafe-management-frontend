@@ -32,7 +32,7 @@ export default function Modal({ open, onClose, title, description, children, foo
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center" role="presentation">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-3 sm:p-4 sm:items-center" role="presentation">
             <button
                 type="button"
                 aria-label="Close dialog"
@@ -57,7 +57,7 @@ export default function Modal({ open, onClose, title, description, children, foo
                     ) : null}
                 </header>
                 <div className="min-h-0 overflow-y-auto p-5">{children}</div>
-                <footer className="shrink-0 flex items-center justify-end gap-2 border-t border-white/10 px-5 py-4">
+                <footer className="shrink-0 flex flex-col-reverse gap-2 border-t border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-end">
                     {footer}
                 </footer>
             </section>

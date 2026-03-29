@@ -42,7 +42,7 @@ export function AuthShowcase() {
             >
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] backdrop-blur">
                     <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                    AMIDOS Cafe Cloud
+                    AMIDOS security and software
                 </div>
 
                 <h1 className="mt-8 max-w-lg text-4xl font-semibold leading-tight text-white/95 xl:text-5xl">

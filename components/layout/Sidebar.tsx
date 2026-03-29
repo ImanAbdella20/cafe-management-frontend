@@ -218,7 +218,7 @@ export default function Sidebar({
                         {showLabels ? (
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">AMIDOS</p>
-                                <h1 className="truncate text-sm font-semibold text-slate-100">Cafe Cloud</h1>
+                                <h1 className="truncate text-sm font-semibold text-slate-100">Security and Software</h1>
                             </div>
                         ) : null}
 

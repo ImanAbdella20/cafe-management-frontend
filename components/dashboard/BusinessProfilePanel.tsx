@@ -57,7 +57,7 @@ export default function BusinessProfilePanel() {
     const [data, setData] = useState<ProfileData>(() => {
         if (typeof window === "undefined") {
             return {
-                businessName: "AMIDOS Cafe",
+                businessName: "AMIDOS Security and Software",
                 userId: 0,
                 role: "",
                 email: "",
@@ -70,7 +70,7 @@ export default function BusinessProfilePanel() {
         const token = getFromStorage("token");
 
         return {
-            businessName: "AMIDOS Cafe",
+            businessName: "AMIDOS Security and Software",
             userId: getUserIdFromToken(token),
             role: getRoleFromToken(token),
             email: getFromStorage("auth:user-email"),

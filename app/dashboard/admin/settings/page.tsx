@@ -35,7 +35,7 @@ type AdminSettings = {
 const SETTINGS_STORAGE_KEY = "admin:settings:v1";
 
 const defaultSettings: AdminSettings = {
-    cafeName: "AMIDOS Cafe",
+    cafeName: "AMIDOS Security and Software",
     branchCode: "BR1",
     contactEmail: "admin@cafe.com",
     contactPhone: "+251-900-000-000",

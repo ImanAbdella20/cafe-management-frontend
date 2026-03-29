@@ -117,7 +117,7 @@ export function LoginForm() {
                 </div>
 
                 <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">AMIDOS Cafe</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">AMIDOS Security and Software</p>
                     <CardTitle className="text-3xl text-slate-900 dark:text-slate-100">Welcome back</CardTitle>
                     <CardDescription>Sign in to continue to your dashboard</CardDescription>
                 </div>
@@ -236,7 +236,7 @@ export function LoginForm() {
                         </Link>
                         .
                     </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">Secure login powered by AMIDOS Cafe Cloud</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">Secure login powered by AMIDOS security and software</p>
                 </div>
             </CardFooter>
         </Card>

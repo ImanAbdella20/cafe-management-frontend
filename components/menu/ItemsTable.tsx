@@ -79,7 +79,7 @@ function GridItemImage({ name, imageURL }: GridItemImageProps) {
         .join("") || "?";
 
     return (
-        <div className="mx-auto h-36 w-36 overflow-hidden rounded-xl border border-white/10 bg-slate-900/70 sm:h-40 sm:w-40">
+        <div className="h-40 w-full overflow-hidden rounded-xl border border-white/10 bg-slate-900/70 sm:h-32 lg:h-36">
             {showImage ? (
                 // Use native image tag to avoid forcing external domain configuration for this card image.
                 // eslint-disable-next-line @next/next/no-img-element
@@ -248,10 +248,10 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
         setRemoveImage(false);
     };
 
-    const renderItemActions = (item: MenuItemWithPrice) => (
-        <div className="flex flex-wrap gap-2">
+    const renderItemActions = (item: MenuItemWithPrice, compact = false) => (
+        <div className={`flex flex-wrap gap-2 ${compact ? "w-full" : ""}`}>
             {canEdit ? (
-                <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
+                <Button size="sm" variant="secondary" className={compact ? "flex-1 min-w-28" : ""} onClick={() => openEdit(item)}>
                     Edit
                 </Button>
             ) : null}
@@ -259,6 +259,7 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
                 <Button
                     size="sm"
                     variant="danger"
+                    className={compact ? "flex-1 min-w-28" : ""}
                     onClick={async () => {
                         const confirmed = window.confirm(`Delete item \"${item.name}\"? This action cannot be undone.`);
                         if (!confirmed) {
@@ -281,13 +282,13 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
     );
 
     return (
-        <section className="space-y-4">
-            <header className="flex items-center justify-between">
+        <section className="space-y-5">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold text-slate-100">Items</h2>
+                    <h2 className="text-lg font-semibold text-slate-100 sm:text-xl">Items</h2>
                     <p className="text-sm text-slate-400">Manage menu items and see active item prices.</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex w-full items-center gap-2 sm:w-auto">
                     <div className="inline-flex items-center rounded-xl border border-white/10 bg-slate-950/55 p-1">
                         <button
                             type="button"
@@ -295,7 +296,7 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
                             title="List view"
                             aria-pressed={viewMode === "list"}
                             onClick={() => setViewMode("list")}
-                            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition ${viewMode === "list"
+                            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition sm:h-8 sm:w-8 ${viewMode === "list"
                                 ? "bg-cyan-500/20 text-cyan-100"
                                 : "text-slate-400 hover:bg-white/10 hover:text-slate-100"
                                 }`}
@@ -308,7 +309,7 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
                             title="Grid view"
                             aria-pressed={viewMode === "grid"}
                             onClick={() => setViewMode("grid")}
-                            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition ${viewMode === "grid"
+                            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition sm:h-8 sm:w-8 ${viewMode === "grid"
                                 ? "bg-cyan-500/20 text-cyan-100"
                                 : "text-slate-400 hover:bg-white/10 hover:text-slate-100"
                                 }`}
@@ -316,17 +317,17 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
                             <LayoutGrid className="h-4 w-4" />
                         </button>
                     </div>
-                    {canEdit ? <Button onClick={() => setCreateOpen(true)}>+ Add Item</Button> : null}
+                    {canEdit ? <Button className="ml-auto w-full sm:ml-0 sm:w-auto" onClick={() => setCreateOpen(true)}>+ Add Item</Button> : null}
                 </div>
             </header>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-linear-to-r from-slate-900/85 via-slate-900/55 to-cyan-950/40 p-4 shadow-[0_20px_60px_-45px_rgba(6,182,212,0.75)]">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-linear-to-r from-slate-900/85 via-slate-900/55 to-cyan-950/40 p-3 shadow-[0_20px_60px_-45px_rgba(6,182,212,0.75)] sm:p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300/80">Category Filter</p>
                         <p className="mt-1 text-sm text-slate-300">Focus on one category or view the full catalog instantly.</p>
                     </div>
-                    <div className="w-full max-w-sm space-y-1.5">
+                    <div className="w-full space-y-1.5 lg:max-w-sm">
                         <label htmlFor="item-category-filter" className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                             Quick Select
                         </label>
@@ -346,11 +347,11 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
                     </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
                     <button
                         type="button"
                         onClick={() => setSelectedCategoryFilter("all")}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${selectedCategoryFilter === "all"
+                        className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition ${selectedCategoryFilter === "all"
                             ? "border-cyan-300/60 bg-cyan-400/20 text-cyan-100"
                             : "border-white/15 bg-slate-950/45 text-slate-300 hover:border-cyan-400/45 hover:text-cyan-100"
                             }`}
@@ -364,7 +365,7 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
                                 key={category.id}
                                 type="button"
                                 onClick={() => setSelectedCategoryFilter(String(category.id))}
-                                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${selected
+                                className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition ${selected
                                     ? "border-cyan-300/60 bg-cyan-400/20 text-cyan-100"
                                     : "border-white/15 bg-slate-950/45 text-slate-300 hover:border-cyan-400/45 hover:text-cyan-100"
                                     }`}
@@ -379,54 +380,90 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
             {loading ? <p className="text-sm text-slate-500">Loading items...</p> : null}
 
             {viewMode === "list" ? (
-                <div className="overflow-x-auto rounded-xl border border-white/10 bg-slate-950/45">
-                    <table className="min-w-full text-left text-sm text-slate-300">
-                        <thead className="bg-slate-900/80 text-xs uppercase tracking-wide text-slate-400">
-                            <tr>
-                                <th className="w-16 px-4 py-3">Image</th>
-                                <th className="px-4 py-3">Category</th>
-                                <th className="px-4 py-3">Name</th>
-                                <th className="px-4 py-3">Description</th>
-                                <th className="px-4 py-3">Price</th>
-                                <th className="px-4 py-3">Status</th>
-                                <th className="px-4 py-3">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredItems.length === 0 ? (
+                <>
+                    <div className="space-y-3 md:hidden">
+                        {filteredItems.length === 0 ? (
+                            <div className="rounded-xl border border-white/10 bg-slate-950/45 px-4 py-6 text-center text-sm text-slate-500">
+                                No items found for this category.
+                            </div>
+                        ) : (
+                            filteredItems.map((item) => (
+                                <article key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/45 p-4 shadow-[0_12px_36px_-28px_rgba(6,182,212,0.8)]">
+                                    <div className="flex items-start gap-3">
+                                        <ItemImageCell name={item.name} imageURL={item.image_url ?? ""} />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-semibold text-slate-100">{item.name}</p>
+                                            <p className="mt-0.5 text-xs text-slate-400">{item.category_name || "Unassigned"}</p>
+                                            <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-slate-300/90">{item.description || "No description provided."}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-xs">
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500">Price</p>
+                                            <p className="mt-1 font-semibold text-cyan-100">{item.currency ? `${item.currency === "USD" ? "ETB" : item.currency} ${item.price.toLocaleString()}` : "-"}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500">Status</p>
+                                            <p className="mt-1 font-medium text-slate-200">{item.is_available ? "Available" : "Unavailable"}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3">{renderItemActions(item, true)}</div>
+                                </article>
+                            ))
+                        )}
+                    </div>
+
+                    <div className="hidden overflow-x-auto rounded-xl border border-white/10 bg-slate-950/45 md:block">
+                        <table className="min-w-full text-left text-sm text-slate-300">
+                            <thead className="bg-slate-900/80 text-xs uppercase tracking-wide text-slate-400">
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
-                                        No items found for this category.
-                                    </td>
+                                    <th className="w-16 px-4 py-3">Image</th>
+                                    <th className="px-4 py-3">Category</th>
+                                    <th className="px-4 py-3">Name</th>
+                                    <th className="px-4 py-3">Description</th>
+                                    <th className="px-4 py-3">Price</th>
+                                    <th className="px-4 py-3">Status</th>
+                                    <th className="px-4 py-3">Actions</th>
                                 </tr>
-                            ) : (
-                                filteredItems.map((item) => (
-                                    <tr key={item.id} className="border-t border-white/10 hover:bg-white/5">
-                                        <td className="px-4 py-3">
-                                            <ItemImageCell name={item.name} imageURL={item.image_url ?? ""} />
+                            </thead>
+                            <tbody>
+                                {filteredItems.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
+                                            No items found for this category.
                                         </td>
-                                        <td className="px-4 py-3">
-                                            {item.category_name ? (
-                                                <span className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-100">
-                                                    {item.category_name}
-                                                </span>
-                                            ) : (
-                                                <span className="text-slate-500">Unassigned</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 font-medium text-slate-100">{item.name}</td>
-                                        <td className="px-4 py-3">{item.description || "-"}</td>
-                                        <td className="px-4 py-3">{item.currency ? `${item.currency === "USD" ? "ETB" : item.currency} ${item.price.toLocaleString()}` : "-"}</td>
-                                        <td className="px-4 py-3">{item.is_available ? "Available" : "Unavailable"}</td>
-                                        <td className="px-4 py-3">{renderItemActions(item)}</td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                ) : (
+                                    filteredItems.map((item) => (
+                                        <tr key={item.id} className="border-t border-white/10 hover:bg-white/5">
+                                            <td className="px-4 py-3">
+                                                <ItemImageCell name={item.name} imageURL={item.image_url ?? ""} />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {item.category_name ? (
+                                                    <span className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-100">
+                                                        {item.category_name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-500">Unassigned</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 font-medium text-slate-100">{item.name}</td>
+                                            <td className="px-4 py-3">{item.description || "-"}</td>
+                                            <td className="px-4 py-3">{item.currency ? `${item.currency === "USD" ? "ETB" : item.currency} ${item.price.toLocaleString()}` : "-"}</td>
+                                            <td className="px-4 py-3">{item.is_available ? "Available" : "Unavailable"}</td>
+                                            <td className="px-4 py-3">{renderItemActions(item)}</td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
             ) : (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {filteredItems.length === 0 ? (
                         <div className="col-span-full rounded-xl border border-white/10 bg-slate-950/45 px-4 py-6 text-center text-slate-500">
                             No items found for this category.
@@ -435,7 +472,7 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
                         filteredItems.map((item) => (
                             <article
                                 key={item.id}
-                                className="mx-auto w-full max-w-[18.5rem] rounded-2xl border border-white/10 bg-slate-950/45 p-4 shadow-[0_18px_45px_-35px_rgba(6,182,212,0.75)]"
+                                className="w-full rounded-2xl border border-white/10 bg-slate-950/45 p-4 shadow-[0_18px_45px_-35px_rgba(6,182,212,0.75)] sm:max-w-64 sm:p-3 xl:max-w-64"
                             >
                                 <GridItemImage name={item.name} imageURL={item.image_url ?? ""} />
 
@@ -461,7 +498,7 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
                                     </span>
                                 </div>
 
-                                <div className="mt-3">{renderItemActions(item)}</div>
+                                <div className="mt-3">{renderItemActions(item, true)}</div>
                             </article>
                         ))
                     )}

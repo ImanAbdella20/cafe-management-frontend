@@ -119,18 +119,18 @@ export default function MenuImageUploadField({
                     }}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={handleDrop}
-                    className={`group relative overflow-hidden rounded-2xl border border-dashed bg-slate-950/55 p-4 transition ${disabled
-                            ? "cursor-not-allowed border-white/10 opacity-70"
-                            : isDragging
-                                ? "cursor-pointer border-cyan-300/60 bg-cyan-500/10"
-                                : "cursor-pointer border-white/10 hover:border-cyan-300/40 hover:bg-slate-900/70"
+                    className={`group relative overflow-hidden rounded-2xl border border-dashed bg-slate-950/55 p-3 transition sm:p-4 ${disabled
+                        ? "cursor-not-allowed border-white/10 opacity-70"
+                        : isDragging
+                            ? "cursor-pointer border-cyan-300/60 bg-cyan-500/10"
+                            : "cursor-pointer border-white/10 hover:border-cyan-300/40 hover:bg-slate-900/70"
                         }`}
                 >
                     {visiblePreview ? (
                         <div className="space-y-3">
                             <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={visiblePreview} alt="Menu item preview" className="h-52 w-full object-cover" />
+                                <img src={visiblePreview} alt="Menu item preview" className="h-40 w-full object-cover sm:h-52" />
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-300">
                                 <ImagePlus className="h-4 w-4 text-cyan-300" aria-hidden="true" />
@@ -138,7 +138,7 @@ export default function MenuImageUploadField({
                             </div>
                         </div>
                     ) : (
-                        <div className="flex min-h-52 flex-col items-center justify-center gap-3 rounded-2xl border border-white/5 bg-slate-900/55 px-6 text-center">
+                        <div className="flex min-h-44 flex-col items-center justify-center gap-3 rounded-2xl border border-white/5 bg-slate-900/55 px-4 py-5 text-center sm:min-h-52 sm:px-6">
                             <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-cyan-200">
                                 <UploadCloud className="h-6 w-6" aria-hidden="true" />
                             </div>
@@ -158,7 +158,7 @@ export default function MenuImageUploadField({
             {error ? <p className="text-xs text-rose-300">{error}</p> : null}
 
             <div className="flex flex-wrap gap-2">
-                <Button type="button" size="sm" variant="secondary" onClick={openFilePicker} disabled={disabled}>
+                <Button type="button" size="sm" variant="secondary" className="w-full sm:w-auto" onClick={openFilePicker} disabled={disabled}>
                     {visiblePreview ? "Replace Image" : "Choose Image"}
                 </Button>
 
@@ -167,6 +167,7 @@ export default function MenuImageUploadField({
                         type="button"
                         size="sm"
                         variant="ghost"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                             onFileChange(null);
                             setError("");
@@ -183,6 +184,7 @@ export default function MenuImageUploadField({
                         type="button"
                         size="sm"
                         variant="ghost"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                             onRemoveExistingChange?.(true);
                             setError("");
@@ -198,6 +200,7 @@ export default function MenuImageUploadField({
                         type="button"
                         size="sm"
                         variant="ghost"
+                        className="w-full sm:w-auto"
                         onClick={() => onRemoveExistingChange?.(false)}
                         disabled={disabled}
                     >

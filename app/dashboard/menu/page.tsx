@@ -131,7 +131,7 @@ export default function MenuManagementPage() {
 
                 {toast ? (
                     <div
-                        className={`fixed right-4 top-20 z-60 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg ${toast.type === "success"
+                        className={`fixed inset-x-4 top-20 z-60 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg sm:inset-x-auto sm:right-4 ${toast.type === "success"
                             ? "border-emerald-300/30 bg-emerald-500/15 text-emerald-100"
                             : "border-rose-300/30 bg-rose-500/15 text-rose-100"
                             }`}

@@ -32,7 +32,7 @@ export default function DashboardLayout({ role, children }: DashboardLayoutProps
 
     useEffect(() => {
         const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
-        document.title = `AMIDOS Cafe | ${roleLabel}`;
+        document.title = `AMIDOS Security and Software | ${roleLabel}`;
     }, [role]);
 
     useEffect(() => {
