@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { LayoutGrid, List } from "lucide-react";
 import MenuImageUploadField from "@/components/menu/MenuImageUploadField";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -19,6 +20,8 @@ type ItemsTableProps = {
     onRefresh: () => Promise<void>;
     notify: ToastNotify;
 };
+
+type ViewMode = "list" | "grid";
 
 function canManage(role: AppRole) {
     return role === "admin" || role === "manager";
@@ -59,6 +62,41 @@ function ItemImageCell({ name, imageURL }: ItemImageCellProps) {
     );
 }
 
+type GridItemImageProps = {
+    name: string;
+    imageURL: string;
+};
+
+function GridItemImage({ name, imageURL }: GridItemImageProps) {
+    const [imageFailed, setImageFailed] = useState(false);
+    const trimmedURL = resolveMenuImageURL(imageURL);
+    const showImage = trimmedURL.length > 0 && !imageFailed;
+    const initials = name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join("") || "?";
+
+    return (
+        <div className="mx-auto h-36 w-36 overflow-hidden rounded-xl border border-white/10 bg-slate-900/70 sm:h-40 sm:w-40">
+            {showImage ? (
+                // Use native image tag to avoid forcing external domain configuration for this card image.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={trimmedURL}
+                    alt={`${name} item image`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    onError={() => setImageFailed(true)}
+                />
+            ) : (
+                <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-slate-300">{initials}</div>
+            )}
+        </div>
+    );
+}
+
 export default function ItemsTable({ role, items, categories, loading, onRefresh, notify }: ItemsTableProps) {
     const [createOpen, setCreateOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<MenuItemWithPrice | null>(null);
@@ -74,6 +112,7 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
     const [removeImage, setRemoveImage] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all");
+    const [viewMode, setViewMode] = useState<ViewMode>("list");
 
     const canEdit = canManage(role);
     const canDelete = role === "admin";
@@ -209,6 +248,38 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
         setRemoveImage(false);
     };
 
+    const renderItemActions = (item: MenuItemWithPrice) => (
+        <div className="flex flex-wrap gap-2">
+            {canEdit ? (
+                <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
+                    Edit
+                </Button>
+            ) : null}
+            {canDelete ? (
+                <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={async () => {
+                        const confirmed = window.confirm(`Delete item \"${item.name}\"? This action cannot be undone.`);
+                        if (!confirmed) {
+                            return;
+                        }
+
+                        try {
+                            await deleteItem(item.id);
+                            notify("success", "Item deleted.");
+                            await onRefresh();
+                        } catch (error) {
+                            notify("error", error instanceof Error ? error.message : "Failed to delete item.");
+                        }
+                    }}
+                >
+                    Delete
+                </Button>
+            ) : null}
+        </div>
+    );
+
     return (
         <section className="space-y-4">
             <header className="flex items-center justify-between">
@@ -216,7 +287,37 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
                     <h2 className="text-xl font-semibold text-slate-100">Items</h2>
                     <p className="text-sm text-slate-400">Manage menu items and see active item prices.</p>
                 </div>
-                {canEdit ? <Button onClick={() => setCreateOpen(true)}>+ Add Item</Button> : null}
+                <div className="flex items-center gap-2">
+                    <div className="inline-flex items-center rounded-xl border border-white/10 bg-slate-950/55 p-1">
+                        <button
+                            type="button"
+                            aria-label="List view"
+                            title="List view"
+                            aria-pressed={viewMode === "list"}
+                            onClick={() => setViewMode("list")}
+                            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition ${viewMode === "list"
+                                ? "bg-cyan-500/20 text-cyan-100"
+                                : "text-slate-400 hover:bg-white/10 hover:text-slate-100"
+                                }`}
+                        >
+                            <List className="h-4 w-4" />
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="Grid view"
+                            title="Grid view"
+                            aria-pressed={viewMode === "grid"}
+                            onClick={() => setViewMode("grid")}
+                            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition ${viewMode === "grid"
+                                ? "bg-cyan-500/20 text-cyan-100"
+                                : "text-slate-400 hover:bg-white/10 hover:text-slate-100"
+                                }`}
+                        >
+                            <LayoutGrid className="h-4 w-4" />
+                        </button>
+                    </div>
+                    {canEdit ? <Button onClick={() => setCreateOpen(true)}>+ Add Item</Button> : null}
+                </div>
             </header>
 
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-linear-to-r from-slate-900/85 via-slate-900/55 to-cyan-950/40 p-4 shadow-[0_20px_60px_-45px_rgba(6,182,212,0.75)]">
@@ -277,82 +378,95 @@ export default function ItemsTable({ role, items, categories, loading, onRefresh
 
             {loading ? <p className="text-sm text-slate-500">Loading items...</p> : null}
 
-            <div className="overflow-x-auto rounded-xl border border-white/10 bg-slate-950/45">
-                <table className="min-w-full text-left text-sm text-slate-300">
-                    <thead className="bg-slate-900/80 text-xs uppercase tracking-wide text-slate-400">
-                        <tr>
-                            <th className="w-16 px-4 py-3">Image</th>
-                            <th className="px-4 py-3">Category</th>
-                            <th className="px-4 py-3">Name</th>
-                            <th className="px-4 py-3">Description</th>
-                            <th className="px-4 py-3">Active Price</th>
-                            <th className="px-4 py-3">Status</th>
-                            <th className="px-4 py-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredItems.length === 0 ? (
+            {viewMode === "list" ? (
+                <div className="overflow-x-auto rounded-xl border border-white/10 bg-slate-950/45">
+                    <table className="min-w-full text-left text-sm text-slate-300">
+                        <thead className="bg-slate-900/80 text-xs uppercase tracking-wide text-slate-400">
                             <tr>
-                                <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
-                                    No items found for this category.
-                                </td>
+                                <th className="w-16 px-4 py-3">Image</th>
+                                <th className="px-4 py-3">Category</th>
+                                <th className="px-4 py-3">Name</th>
+                                <th className="px-4 py-3">Description</th>
+                                <th className="px-4 py-3">Price</th>
+                                <th className="px-4 py-3">Status</th>
+                                <th className="px-4 py-3">Actions</th>
                             </tr>
-                        ) : (
-                            filteredItems.map((item) => (
-                                <tr key={item.id} className="border-t border-white/10 hover:bg-white/5">
-                                    <td className="px-4 py-3">
-                                        <ItemImageCell name={item.name} imageURL={item.image_url ?? ""} />
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {item.category_name ? (
-                                            <span className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-100">
-                                                {item.category_name}
-                                            </span>
-                                        ) : (
-                                            <span className="text-slate-500">Unassigned</span>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-3 font-medium text-slate-100">{item.name}</td>
-                                    <td className="px-4 py-3">{item.description || "-"}</td>
-                                    <td className="px-4 py-3">{item.currency ? `${item.currency === "USD" ? "ETB" : item.currency} ${item.price.toLocaleString()}` : "-"}</td>
-                                    <td className="px-4 py-3">{item.is_available ? "Available" : "Unavailable"}</td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex gap-2">
-                                            {canEdit ? (
-                                                <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
-                                                    Edit
-                                                </Button>
-                                            ) : null}
-                                            {canDelete ? (
-                                                <Button
-                                                    size="sm"
-                                                    variant="danger"
-                                                    onClick={async () => {
-                                                        const confirmed = window.confirm(`Delete item \"${item.name}\"? This action cannot be undone.`);
-                                                        if (!confirmed) {
-                                                            return;
-                                                        }
-
-                                                        try {
-                                                            await deleteItem(item.id);
-                                                            notify("success", "Item deleted.");
-                                                            await onRefresh();
-                                                        } catch (error) {
-                                                            notify("error", error instanceof Error ? error.message : "Failed to delete item.");
-                                                        }
-                                                    }}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            ) : null}
-                                        </div>
+                        </thead>
+                        <tbody>
+                            {filteredItems.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
+                                        No items found for this category.
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                            ) : (
+                                filteredItems.map((item) => (
+                                    <tr key={item.id} className="border-t border-white/10 hover:bg-white/5">
+                                        <td className="px-4 py-3">
+                                            <ItemImageCell name={item.name} imageURL={item.image_url ?? ""} />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {item.category_name ? (
+                                                <span className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-100">
+                                                    {item.category_name}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-500">Unassigned</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 font-medium text-slate-100">{item.name}</td>
+                                        <td className="px-4 py-3">{item.description || "-"}</td>
+                                        <td className="px-4 py-3">{item.currency ? `${item.currency === "USD" ? "ETB" : item.currency} ${item.price.toLocaleString()}` : "-"}</td>
+                                        <td className="px-4 py-3">{item.is_available ? "Available" : "Unavailable"}</td>
+                                        <td className="px-4 py-3">{renderItemActions(item)}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {filteredItems.length === 0 ? (
+                        <div className="col-span-full rounded-xl border border-white/10 bg-slate-950/45 px-4 py-6 text-center text-slate-500">
+                            No items found for this category.
+                        </div>
+                    ) : (
+                        filteredItems.map((item) => (
+                            <article
+                                key={item.id}
+                                className="mx-auto w-full max-w-[18.5rem] rounded-2xl border border-white/10 bg-slate-950/45 p-4 shadow-[0_18px_45px_-35px_rgba(6,182,212,0.75)]"
+                            >
+                                <GridItemImage name={item.name} imageURL={item.image_url ?? ""} />
+
+                                <div className="mt-3 flex items-start justify-between gap-3">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-slate-100">{item.name}</h3>
+                                        <p className="text-[11px] text-slate-400">{item.category_name || "Unassigned"}</p>
+                                    </div>
+                                    <span className={`rounded-full border px-2 py-0.5 text-[11px] ${item.is_available
+                                        ? "border-emerald-300/35 bg-emerald-500/10 text-emerald-200"
+                                        : "border-slate-400/25 bg-slate-500/10 text-slate-300"
+                                        }`}>
+                                        {item.is_available ? "Available" : "Unavailable"}
+                                    </span>
+                                </div>
+
+                                <p className="mt-2 line-clamp-2 min-h-8 text-xs leading-5 text-slate-300/90">{item.description || "No description provided."}</p>
+
+                                <div className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/60 px-3 py-1.5">
+                                    <span className="text-[11px] uppercase tracking-[0.08em] text-slate-400">Price</span>
+                                    <span className="text-xs font-semibold text-cyan-100">
+                                        {item.currency ? `${item.currency === "USD" ? "ETB" : item.currency} ${item.price.toLocaleString()}` : "-"}
+                                    </span>
+                                </div>
+
+                                <div className="mt-3">{renderItemActions(item)}</div>
+                            </article>
+                        ))
+                    )}
+                </div>
+            )}
 
             <Modal
                 open={createOpen}
